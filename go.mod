@@ -1,4 +1,4 @@
-module neopwnagotchi/epd2in13v4
+module neopwnagotchi.net/epd2in13v4
 
 go 1.25.3
 
