@@ -2,6 +2,8 @@ package epd2in13v4
 
 import (
 	"fmt"
+	"log"
+	"os/user"
 	"time"
 
 	"github.com/stianeikeland/go-rpio/v4"
@@ -101,7 +103,7 @@ parameter:
 }**/
 
 func EPD_2in13_V4_ReadBusy() {
-	fmt.Println("e-Paper busy")
+	log.Println("e-Paper busy")
 	for {
 		if PIN_BUSY.Read() == 0 {
 			break
@@ -109,7 +111,7 @@ func EPD_2in13_V4_ReadBusy() {
 		time.Sleep(10 * time.Microsecond)
 	}
 	time.Sleep(10 * time.Microsecond)
-	fmt.Println("e-Paper busy release")
+	log.Println("e-Paper busy release")
 }
 
 /******************************************************************************
@@ -259,6 +261,9 @@ func EPD_2in13_V4_Init() error {
 	if err := rpio.Open(); err != nil {
 		return fmt.Errorf("failed to open GPIO: %v", err)
 	}
+	if !isRoot() {
+		return fmt.Errorf("EPD_2in13_V4_Init: requires root privileges to access GPIO")
+	}
 
 	rpio.SpiBegin(rpio.Spi0)
 	rpio.SpiMode(0, 0)
@@ -335,6 +340,10 @@ func EPD_2in13_V4_Init_Fast() error {
 
 	if err := rpio.Open(); err != nil {
 		return fmt.Errorf("failed to open GPIO: %v", err)
+	}
+
+	if !isRoot() {
+		return fmt.Errorf("EPD_2in13_V4_Init_Fast: requires root privileges to access GPIO")
 	}
 
 	rpio.SpiBegin(rpio.Spi0)
@@ -665,4 +674,12 @@ func EPD_2in13_V4_Sleep() {
 	EPD_2in13_V4_SendCommand(0x10) // enter deep sleep
 	EPD_2in13_V4_SendData(0x01)
 	time.Sleep(100 * time.Millisecond)
+}
+
+func isRoot() bool {
+	currentUser, err := user.Current()
+	if err != nil {
+		log.Fatalf("[isRoot] Unable to get current user: %s", err)
+	}
+	return currentUser.Username == "root"
 }
